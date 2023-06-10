@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UIpp Title="Contoso Corp" Icon="logo_mark_dark_icon.ico" Color="#1C252C" >
+	
+	<Actions>
+	<!-- Verify user is authorized to deploy image -->	
+<Action Type="UserAuth" Title="User Authentication" Domain="contoso.com" Group="DesktopImagingGroup" GetGroups="true" MaxRetryCount="5">
+  	<Field Name="Username" Prompt="Custom Username Prompt" Hint="Custom Username Hint" RegEx="[\w\-_.]+"/>
+	<Field Name="Domain" Question="Domain" />
+</Action>
+    
+<Action Type="DefaultValues" />
+    <Action Type="WMIRead" Variable="CurrentTier" Namespace="root\ITLocal" Class="Local_Config" Property="Tier"/>
+    <Action Type="RegRead" Hive="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Value="CurrentVersion" Variable="CurrentVersion" />
+    <Action Type="Info" Name="myInfo" Title="Welcome %XAuthenticatedUser%">
+      <![CDATA[<b>Image Deployment</b><br> <br>Image deployment for Contoso Corporation.<br>]]>
+</Action>
+
+    <!-- Options for using a custom computer build that SCCM WMI query can't get build information from -->
+<Action Type="Input" Name="CustomComputer" Title="Custom Build">
+    <ChoiceInput Variable="CustomYesNo" Sort="True" Question="Are you imaging a custom computer?" Required="True">
+        <Choice Option="Yes" Value="Yes"/>
+        <Choice Option="No" Value="No"/>
+    </ChoiceInput>
+</Action>
+
+<ActionGroup Name="CustomAnswer" Condition='"%CustomYesNo%" = "Yes"' Showback="True">
+    <Action Type="Input" Name="CustomChoice" Title="Custom build options">
+        <ChoiceInput Variable="CustomModel" Sort="False" Question="Choose the build model" Required="True">
+            <Choice Option="Build 1" Value="1"/>
+            <Choice Option="Build 2" Value="2"/>
+        </ChoiceInput>
+    </Action>
+</ActionGroup>
+    <!-- End custom build options -->
+
+	<!-- Get hostname and verify it is not in use in AD -->
+<Action Type="Input" Name="ComputerName" Title="Computer Name" Showback="True">
+	<InputText Prompt="Computer name" Hint="Contoso naming standard." RegEx=".{3,15}" Variable="zzComputerName" Question="Enter the name of this computer" Required="True" ADValidate="ComputerWarning"/>
+</Action>
+
+  <!-- Modify this to add or remove regions -->
+<Action Type="Input" Name="Region" Title="Region" Showback="True">
+    <ChoiceInput Variable="Region" Sort="True" Question="Select the region for the computer" Required="True" AutoComplete="True" >
+        <Choice Option="US West" Value="USWest"/>
+        <Choice Option="US Central" Value="USCentral"/>
+        <Choice Option="USEast" Value="USEast"/>
+    </ChoiceInput>
+</Action>
+    <!--- End of region selection -->
+
+    <!-- Modify this for available OU's -->
+<ActionGroup Name="USWest" Condition='"%Region%" = "USWest"' Showback="True">
+    <Action Type="Input" Name="LocationChoice" Title="US Western Region OU's">
+        <ChoiceInput Variable="OUChoice" Question="Select the OU for the computer" Required="True" AutoComplete="True">
+            <Choice Option="Accounting" Value="Accounting"/>
+            <Choice Option="HR" Value="HR"/>
+            <Choice Option="IT" Value="IT"/>
+            <Choice Option="Marketing" Value="Marketing"/>
+        </ChoiceInput>
+    </Action>
+       <Action Type="TSVar" Name="OSDDomainOUName">"LDAP://OU=%OUChoice%,OU=USWest,DC=Contoso,DC=com"'</Action> 
+</ActionGroup>
+
+<ActionGroup Name="USCentral" Condition='"%Region%" = "USCentral"' Showback="True">
+    <Action Type="Input" Name="LocationChoice" Title="US Central Region OU's">
+        <ChoiceInput Variable="OUChoice" Question="Select the OU for the computer" Required="True" AutoComplete="True">
+            <Choice Option="Accounting" Value="Accounting"/>
+            <Choice Option="HR" Value="HR"/>
+            <Choice Option="IT" Value="IT"/>
+            <Choice Option="Marketing" Value="Marketing"/>
+        </ChoiceInput>
+    </Action>
+       <Action Type="TSVar" Name="OSDDomainOUName">"LDAP://OU=%OUChoice%,OU=USCentral,DC=Contoso,DC=com"'</Action> 
+</ActionGroup>
+
+<ActionGroup Name="USEast" Condition='"%Region%" = "USEast"' Showback="True">
+    <Action Type="Input" Name="LocationChoice" Title="US Eastern Region OU's">
+        <ChoiceInput Variable="OUChoice" Question="Select the OU for the computer" Required="True" AutoComplete="True">
+            <Choice Option="Accounting" Value="Accounting"/>
+            <Choice Option="HR" Value="HR"/>
+            <Choice Option="IT" Value="IT"/>
+            <Choice Option="Marketing" Value="Marketing"/>
+        </ChoiceInput>
+    </Action>
+       <Action Type="TSVar" Name="OSDDomainOUName">""LDAP://OU=%OUChoice%,OU=USEast,DC=Contoso,DC=com"'</Action> 
+</ActionGroup>
+<!-- End of OU selection -->
+
+    <Action Type="TSVar" Name="OSDComputerName">"%zzComputerName%"</Action>
+	<Action Type="TSVar" Name="_SMSTSMake">"%XHWManufacturer%"</Action>
+  
+</Actions>
+  
+</UIpp>
+OSDComputerName
+OSDDomainOUName
